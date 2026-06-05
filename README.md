@@ -46,11 +46,27 @@ cd frontend && npm install && npm run dev
 
 ## Primo utilizzo
 
-1. **Impostazioni** → inserisci URL, email e password di NPM, poi *Testa connessione*.
-2. **CA Root** → crea una nuova CA o importane una esistente (cert + chiave PEM).
-3. **Certificati SSL** → emetti certificati X.509 (CN + SAN, DNS o IP) e inviali a NPM (`→ NPM`).
-4. **Proxy Hosts** → crea i proxy host scegliendo il certificato e le opzioni SSL.
-5. **Script di Trust** → scarica/copia lo script per l'OS del client ed eseguilo come admin.
+1. **Setup** → al primo avvio inserisci l'URL di NPM (verifica di raggiungibilità).
+2. **Login** → accedi con le **credenziali NPM** (vedi sotto).
+3. **CA Root** → crea una nuova CA o importane una esistente (cert + chiave PEM).
+4. **Certificati SSL** → emetti certificati X.509 (CN + SAN, DNS o IP) e inviali a NPM.
+5. **Proxy Hosts** → crea i proxy host scegliendo il certificato e le opzioni SSL.
+6. **Script di Trust** → scarica/copia lo script per l'OS del client ed eseguilo come admin.
+
+## Autenticazione
+
+L'accesso alla UI è protetto e si appoggia all'**auth di Nginx Proxy Manager**: si
+accede con le **stesse credenziali** (email + password) di NPM, verificate live
+contro `/api/tokens`.
+
+- **Setup iniziale**: l'URL di NPM si imposta in una schermata pubblica al primo
+  avvio; dopo, è modificabile solo da utenti autenticati.
+- **Sessioni**: per-client e gestite lato server (in memoria). Il logout invalida
+  davvero la sessione; alla scadenza idle (default 8h, `SESSION_TTL_HOURS`) o al
+  riavvio del server è necessario ri-loggarsi.
+- **Cookie**: `HttpOnly`, `SameSite=Lax`. Dietro HTTPS attiva `COOKIE_SECURE=true`.
+- Tutte le API sono protette tranne `GET /api/ca/download` (il certificato root è
+  pubblico ed è scaricato dai client tramite gli script di trust senza sessione).
 
 ## Script di Trust
 
@@ -93,6 +109,10 @@ Gli script accettano anche un percorso a un file `.crt` locale invece di un URL.
 | GET | `/api/npm/access-lists` | Lista access list |
 | GET/PUT/POST | `/api/settings`, `/api/settings/npm`, `/api/settings/npm/test` | Config NPM |
 | GET | `/api/scripts/:os` | Script di trust (`linux`/`macos`/`windows`) |
+| GET | `/api/auth/status` | Stato auth (configured/authenticated/user) |
+| POST | `/api/auth/setup` | Imposta l'URL NPM (setup iniziale) |
+| POST | `/api/auth/login` | Login con credenziali NPM |
+| POST | `/api/auth/logout` | Logout |
 | GET | `/api/hosts` | Legge il file hosts (contenuto + voci gestite + scrivibilità) |
 | POST | `/api/hosts` | Aggiunge voci: `{ ip, domains: [...] }` |
 | DELETE | `/api/hosts` | Rimuove voci gestite: `{ domains: [...] }` |

@@ -6,7 +6,9 @@ import Certificates from "./pages/Certificates.jsx";
 import Scripts from "./pages/Scripts.jsx";
 import Settings from "./pages/Settings.jsx";
 import Hosts from "./pages/Hosts.jsx";
+import Login from "./pages/Login.jsx";
 import Icon from "./components/Icon.jsx";
+import { useAuth } from "./components/AuthContext.jsx";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: "dashboard", end: true },
@@ -18,6 +20,19 @@ const nav = [
 ];
 
 export default function App() {
+  const auth = useAuth();
+
+  if (auth.phase === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-slate-400">
+        Caricamento…
+      </div>
+    );
+  }
+  if (auth.phase === "setup" || auth.phase === "login") {
+    return <Login />;
+  }
+
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-60 flex-col border-r border-slate-200 bg-white">
@@ -61,6 +76,23 @@ export default function App() {
           >
             <Icon name="chevronRight" className="h-3.5 w-3.5" /> Certificati SSL
           </NavLink>
+        </div>
+
+        {/* Utente loggato + logout */}
+        <div className="border-t border-slate-200 px-3 py-3">
+          <div className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5">
+            <span className="truncate text-xs text-slate-500" title={auth.user?.email}>
+              {auth.user?.email}
+            </span>
+            <button
+              onClick={auth.logout}
+              className="btn-ghost flex-shrink-0 p-1.5 text-slate-500 hover:text-red-600"
+              title="Esci"
+              aria-label="Esci"
+            >
+              <Icon name="logout" className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </aside>
 

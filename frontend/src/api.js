@@ -1,7 +1,17 @@
 // Wrapper minimale attorno a fetch per le chiamate all'API del backend.
 
-async function handle(res) {
+// Callback invocato quando una chiamata protetta risponde 401 (sessione scaduta).
+let unauthorizedHandler = null;
+export function setUnauthorizedHandler(fn) {
+  unauthorizedHandler = fn;
+}
+
+async function handle(res, path) {
   const ct = res.headers.get("content-type") || "";
+  if (res.status === 401 && !path.startsWith("/auth/")) {
+    // Sessione assente/scaduta: notifica il contesto auth per tornare al login.
+    unauthorizedHandler?.();
+  }
   if (!res.ok) {
     let message = `Errore ${res.status}`;
     if (ct.includes("application/json")) {
@@ -19,12 +29,19 @@ async function handle(res) {
 function req(method, path, body) {
   return fetch(`/api${path}`, {
     method,
+    credentials: "same-origin",
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
-  }).then(handle);
+  }).then((res) => handle(res, path));
 }
 
 export const api = {
+  // Auth
+  getAuthStatus: () => req("GET", "/auth/status"),
+  setup: (data) => req("POST", "/auth/setup", data),
+  login: (data) => req("POST", "/auth/login", data),
+  logout: () => req("POST", "/auth/logout"),
+
   // Settings
   getSettings: () => req("GET", "/settings"),
   saveNpm: (data) => req("PUT", "/settings/npm", data),

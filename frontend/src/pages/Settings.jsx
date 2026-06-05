@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { useToast } from "../components/Toast.jsx";
+import { useAuth } from "../components/AuthContext.jsx";
 
 export default function Settings() {
   const toast = useToast();
-  const [form, setForm] = useState({ url: "", email: "", password: "" });
-  const [passwordSet, setPasswordSet] = useState(false);
+  const auth = useAuth();
+  const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -13,8 +14,7 @@ export default function Settings() {
   async function load() {
     try {
       const { npm } = await api.getSettings();
-      setForm({ url: npm.url, email: npm.email, password: "" });
-      setPasswordSet(npm.passwordSet);
+      setUrl(npm.url || "");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -26,17 +26,11 @@ export default function Settings() {
     load();
   }, []);
 
-  function update(field) {
-    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-  }
-
   async function save() {
     setSaving(true);
     try {
-      await api.saveNpm(form);
-      toast.success("Impostazioni salvate");
-      setForm((f) => ({ ...f, password: "" }));
-      setPasswordSet(true);
+      await api.saveNpm({ url });
+      toast.success("URL salvato");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -47,10 +41,7 @@ export default function Settings() {
   async function test() {
     setTesting(true);
     try {
-      // Se la password è stata digitata, testa con i valori del form,
-      // altrimenti usa quelli salvati lato server.
-      const payload = form.password ? form : {};
-      await api.testNpm(payload);
+      await api.testNpm({}); // usa le credenziali della sessione corrente
       toast.success("Connessione a NPM riuscita");
     } catch (err) {
       toast.error(err.message);
@@ -65,7 +56,7 @@ export default function Settings() {
     <div>
       <h1 className="mb-1 text-2xl font-bold">Impostazioni</h1>
       <p className="mb-6 text-sm text-slate-500">
-        Configura la connessione a Nginx Proxy Manager.
+        Connessione a Nginx Proxy Manager e account.
       </p>
 
       <div className="card max-w-xl p-6">
@@ -76,42 +67,34 @@ export default function Settings() {
             <input
               className="input"
               placeholder="http://npm.local:81"
-              value={form.url}
-              onChange={update("url")}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
             />
             <p className="mt-1 text-xs text-slate-400">
-              URL completo dell'istanza NPM (incluso porta admin, es. 81).
+              URL completo dell'istanza NPM (inclusa porta admin, es. 81).
             </p>
           </div>
           <div>
-            <label className="label">Email</label>
-            <input
-              className="input"
-              placeholder="admin@example.com"
-              value={form.email}
-              onChange={update("email")}
-            />
-          </div>
-          <div>
-            <label className="label">Password</label>
-            <input
-              type="password"
-              className="input"
-              placeholder={passwordSet ? "•••••••• (invariata)" : "password"}
-              value={form.password}
-              onChange={update("password")}
-            />
-            {passwordSet && (
-              <p className="mt-1 text-xs text-slate-400">
-                Lascia vuoto per mantenere la password attuale.
-              </p>
-            )}
+            <label className="label">Account</label>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+              <span className="text-slate-600">{auth.user?.email}</span>
+              <button
+                className="text-xs text-brand-600 hover:underline"
+                onClick={auth.logout}
+              >
+                Cambia account (logout)
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-400">
+              Le credenziali NPM sono quelle usate per accedere. Per cambiarle, esci e
+              accedi con un altro account.
+            </p>
           </div>
         </div>
 
         <div className="mt-6 flex gap-2">
           <button className="btn-primary" onClick={save} disabled={saving}>
-            {saving ? "Salvataggio…" : "Salva"}
+            {saving ? "Salvataggio…" : "Salva URL"}
           </button>
           <button className="btn-secondary" onClick={test} disabled={testing}>
             {testing ? "Test in corso…" : "Testa connessione"}

@@ -188,6 +188,29 @@ async function request(method, endpoint, body) {
   return ct.includes("application/json") ? res.json() : res.text();
 }
 
+// ---------- Autenticazione (login app) ----------
+
+// Verifica credenziali contro NPM (usato dal login). Lancia un errore
+// diagnostico se non valide / NPM non raggiungibile.
+export async function verifyCredentials({ url, email, password }) {
+  const npm = {
+    url: (url || "").replace(/\/+$/, ""),
+    email,
+    password,
+  };
+  await authenticate(npm);
+  return { ok: true, email };
+}
+
+// Verifica che l'URL risponda come un'istanza NPM (usato dal setup).
+export async function pingNpm(url) {
+  const base = (url || "").replace(/\/+$/, "");
+  // L'endpoint /api/ di NPM risponde con uno stato; qualsiasi risposta HTTP
+  // (anche 401/404) indica che il server è raggiungibile.
+  const res = await npmFetch(`${base}/api/`, { method: "GET" });
+  return { ok: true, status: res.status };
+}
+
 // ---------- Test connessione ----------
 
 export async function testConnection(npmOverride) {

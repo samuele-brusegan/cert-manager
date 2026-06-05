@@ -7,6 +7,10 @@ services:
       - DATA_DIR=/data
       # URL pubblico opzionale, usato negli script di trust per il download del cert root.
       # - PUBLIC_URL=https://certs.example.com
+      # Sicurezza sessione: attiva il flag Secure del cookie quando sei dietro HTTPS.
+      # - COOKIE_SECURE=true
+      # Durata sessione idle in ore (default 8).
+      # - SESSION_TTL_HOURS=8
       # Percorso del file hosts gestito dal backend. Per scrivere sul file hosts
       # REALE dell'host, monta il file (vedi volumes) e punta qui:
       - HOSTS_FILE=/host-etc-hosts
