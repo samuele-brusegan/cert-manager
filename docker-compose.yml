@@ -1,0 +1,49 @@
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      - PORT=3001
+      - DATA_DIR=/data
+      # URL pubblico opzionale, usato negli script di trust per il download del cert root.
+      # - PUBLIC_URL=https://certs.example.com
+      # Percorso del file hosts gestito dal backend. Per scrivere sul file hosts
+      # REALE dell'host, monta il file (vedi volumes) e punta qui:
+      - HOSTS_FILE=/host-etc-hosts
+    volumes:
+      - cert_data:/data
+      # Monta il file hosts dell'host per poterlo modificare dalla UI (lettura/scrittura).
+      - /etc/hosts:/host-etc-hosts
+    expose:
+      - "3001"
+    # Permette di raggiungere NPM tramite la porta pubblicata sull'host
+    # usando l'URL: http://host.docker.internal:81
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # --- Per raggiungere NPM tramite il NOME del suo container ---
+    # Decommenta e imposta il nome della rete del compose di NPM,
+    # poi nella UI usa l'URL: http://<nome-container-npm>:81
+    # networks:
+    #   - reverse-proxy
+    #   - default
+    #   - npm_network
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8091:80"
+
+volumes:
+  cert_data:
+
+# --- Rete esterna di NPM (opzionale) ---
+# Trova il nome con: docker network ls
+# networks:
+#   reverse-proxy:
+#     external: true
+#   npm_network:
+#     external: true
+#     name: nginxproxymanager_default
