@@ -28,7 +28,7 @@ I dati persistenti (CA, certificati emessi, credenziali NPM) risiedono in `data/
 docker compose up -d --build
 ```
 
-UI disponibile su **http://localhost:8080**.
+UI disponibile su **http://localhost:8091**.
 
 > Per gli script di trust scaricati dai client, imposta `PUBLIC_URL` nel
 > servizio `backend` del `docker-compose.yml` con l'URL pubblico raggiungibile
