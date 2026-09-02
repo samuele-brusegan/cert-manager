@@ -63,6 +63,7 @@ export const api = {
 
   // NPM
   listProxyHosts: () => req("GET", "/npm/proxy-hosts"),
+  listDockerContainers: () => req("GET", "/npm/docker-containers"),
   createProxyHost: (data) => req("POST", "/npm/proxy-hosts", data),
   updateProxyHost: (id, data) => req("PUT", `/npm/proxy-hosts/${id}`, data),
   deleteProxyHost: (id) => req("DELETE", `/npm/proxy-hosts/${id}`),

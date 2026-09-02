@@ -56,6 +56,7 @@ function Switch({ checked, onChange, disabled, title }) {
 const emptyForm = {
   domainNames: "",
   forwardScheme: "http",
+  forwardHostMode: "container",
   forwardHost: "",
   forwardPort: 80,
   allowWebsocketUpgrade: false,
@@ -80,6 +81,9 @@ export default function ProxyHosts() {
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [hostsInfo, setHostsInfo] = useState(null);
+  const [dockerContainers, setDockerContainers] = useState([]);
+  const [containersLoading, setContainersLoading] = useState(false);
+  const [containersError, setContainersError] = useState("");
 
   async function load() {
     setLoading(true);
@@ -91,6 +95,20 @@ export default function ProxyHosts() {
       toast.error(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadContainers() {
+    setContainersLoading(true);
+    setContainersError("");
+    try {
+      const result = await api.listDockerContainers();
+      setDockerContainers(result.containers || []);
+    } catch (err) {
+      setDockerContainers([]);
+      setContainersError(err.message);
+    } finally {
+      setContainersLoading(false);
     }
   }
 
@@ -118,6 +136,7 @@ export default function ProxyHosts() {
     setEditing(null);
     setForm(emptyForm);
     setShowForm(true);
+    loadContainers();
   }
 
   function openEdit(h) {
@@ -125,6 +144,7 @@ export default function ProxyHosts() {
     setForm({
       domainNames: (h.domain_names || []).join(", "),
       forwardScheme: h.forward_scheme,
+      forwardHostMode: dockerContainers.includes(h.forward_host) ? "container" : "manual",
       forwardHost: h.forward_host,
       forwardPort: h.forward_port,
       allowWebsocketUpgrade: !!h.allow_websocket_upgrade,
@@ -136,6 +156,7 @@ export default function ProxyHosts() {
       http2Support: !!h.http2_support,
     });
     setShowForm(true);
+    loadContainers();
   }
 
   function set(field) {
@@ -410,13 +431,56 @@ export default function ProxyHosts() {
               </select>
             </Field>
             <div className="col-span-2">
-              <Field label="IP / Host di forward *">
-                <input
+              <Field
+                label="Host di forward *"
+                hint={
+                  containersError
+                    ? `Container non disponibili: ${containersError}. Puoi usare l'inserimento manuale.`
+                    : "Sono mostrati prima i container liberi nella rete reverse-proxy."
+                }
+              >
+                <select
                   className="input"
-                  placeholder="192.168.1.10"
-                  value={form.forwardHost}
-                  onChange={(e) => set("forwardHost")(e.target.value)}
-                />
+                  value={form.forwardHostMode === "manual" ? "__manual__" : form.forwardHost}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "__manual__") {
+                      setForm((f) => ({ ...f, forwardHostMode: "manual", forwardHost: "" }));
+                    } else {
+                      setForm((f) => ({ ...f, forwardHostMode: "container", forwardHost: value }));
+                    }
+                  }}
+                >
+                  <option value="">{containersLoading ? "Caricamento container…" : "Seleziona un container…"}</option>
+                  {dockerContainers.filter((name) => !hosts.some((h) => (h.forward_host || "").toLowerCase() === name.toLowerCase())).length > 0 && (
+                    <optgroup label="Container senza Proxy Host">
+                      {dockerContainers
+                        .filter((name) => !hosts.some((h) => (h.forward_host || "").toLowerCase() === name.toLowerCase()))
+                        .map((name) => <option key={`free-${name}`} value={name}>{name}</option>)}
+                    </optgroup>
+                  )}
+                  {dockerContainers.some((name) => !hosts.some((h) => (h.forward_host || "").toLowerCase() === name.toLowerCase())) &&
+                    dockerContainers.some((name) => hosts.some((h) => (h.forward_host || "").toLowerCase() === name.toLowerCase())) && (
+                    <option disabled>────────────────────</option>
+                  )}
+                  {dockerContainers.filter((name) => hosts.some((h) => (h.forward_host || "").toLowerCase() === name.toLowerCase())).length > 0 && (
+                    <optgroup label="Container già presenti tra i Proxy Host">
+                      {dockerContainers
+                        .filter((name) => hosts.some((h) => (h.forward_host || "").toLowerCase() === name.toLowerCase()))
+                        .map((name) => <option key={`used-${name}`} value={name}>{name}</option>)}
+                    </optgroup>
+                  )}
+                  <option value="__manual__">Inserisci manualmente…</option>
+                </select>
+                {form.forwardHostMode === "manual" && (
+                  <input
+                    className="input mt-2"
+                    placeholder="IP o hostname, es. 192.168.1.10"
+                    value={form.forwardHost}
+                    onChange={(e) => set("forwardHost")(e.target.value)}
+                    autoFocus
+                  />
+                )}
               </Field>
             </div>
             <Field label="Porta *">

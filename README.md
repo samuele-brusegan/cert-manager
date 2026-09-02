@@ -30,6 +30,12 @@ docker compose up -d --build
 
 UI disponibile su **http://localhost:8091**.
 
+Il campo **Host di forward** dei Proxy Host propone i container collegati alla
+rete Docker `reverse-proxy`, separando quelli non ancora utilizzati da quelli
+già associati. Il backend legge questa informazione dal Docker Engine tramite
+`/var/run/docker.sock`; se la rete o il socket non sono disponibili, è sempre
+possibile scegliere **Inserisci manualmente** e usare un IP o hostname.
+
 > Per gli script di trust scaricati dai client, imposta `PUBLIC_URL` nel
 > servizio `backend` del `docker-compose.yml` con l'URL pubblico raggiungibile
 > dai client (es. `https://certs.example.com`).

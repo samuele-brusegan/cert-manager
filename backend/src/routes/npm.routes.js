@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as npm from "../lib/npm.js";
+import { dockerNetworkName, listNetworkContainers } from "../lib/docker.js";
 import { issueCertificate, getCertificateFiles } from "../lib/ca.js";
 
 const router = Router();
@@ -17,6 +18,15 @@ router.get("/proxy-hosts", async (req, res, next) => {
 router.get("/proxy-hosts/:id", async (req, res, next) => {
   try {
     res.json(await npm.getProxyHost(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Container collegati alla rete Docker del reverse proxy, per il forward host.
+router.get("/docker-containers", async (req, res, next) => {
+  try {
+    res.json({ network: dockerNetworkName(), containers: await listNetworkContainers() });
   } catch (err) {
     next(err);
   }
