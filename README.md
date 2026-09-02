@@ -49,7 +49,7 @@ cd frontend && npm install && npm run dev
 1. **Setup** → al primo avvio inserisci l'URL di NPM (verifica di raggiungibilità).
 2. **Login** → accedi con le **credenziali NPM** (vedi sotto).
 3. **CA Root** → crea una nuova CA o importane una esistente (cert + chiave PEM).
-4. **Certificati SSL** → emetti certificati X.509 (CN + SAN, DNS o IP) e inviali a NPM.
+4. **Certificati SSL** → emetti certificati firmati dalla CA root senza creare un Proxy Host. Puoi scaricarli oppure caricarli come certificati custom su NPM.
 5. **Proxy Hosts** → crea i proxy host scegliendo il certificato e le opzioni SSL.
 6. **Script di Trust** → scarica/copia lo script per l'OS del client ed eseguilo come admin.
 

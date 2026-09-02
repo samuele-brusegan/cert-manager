@@ -30,6 +30,8 @@ export default function Certificates() {
     organization: "",
     validityDays: 397,
     keySize: 2048,
+    uploadToNpm: false,
+    npmName: "",
   });
 
   async function load() {
@@ -69,16 +71,32 @@ export default function Certificates() {
         .split(/[\s,]+/)
         .map((s) => s.trim())
         .filter(Boolean);
-      await api.issueCert({
+      const result = await api.issueCert({
         commonName: form.commonName,
         altNames,
         organization: form.organization || undefined,
         validityDays: Number(form.validityDays),
         keySize: Number(form.keySize),
       });
-      toast.success("Certificato emesso");
+      let message = "Certificato firmato ed emesso localmente";
+      if (form.uploadToNpm) {
+        try {
+          await api.pushCertToNpm(result.certificate.id, {
+            niceName: form.npmName.trim() || undefined,
+          });
+          message += "; caricato su NPM";
+        } catch (err) {
+          message += ". Upload su NPM non riuscito: " + err.message;
+          toast.error(message);
+          setShowIssue(false);
+          setForm({ commonName: "", altNames: "", organization: "", validityDays: 397, keySize: 2048, uploadToNpm: false, npmName: "" });
+          load();
+          return;
+        }
+      }
+      toast.success(message);
       setShowIssue(false);
-      setForm({ commonName: "", altNames: "", organization: "", validityDays: 397, keySize: 2048 });
+      setForm({ commonName: "", altNames: "", organization: "", validityDays: 397, keySize: 2048, uploadToNpm: false, npmName: "" });
       load();
     } catch (err) {
       toast.error(err.message);
@@ -116,7 +134,7 @@ export default function Certificates() {
         <div>
           <h1 className="mb-1 text-2xl font-bold">Certificati SSL</h1>
           <p className="text-sm text-slate-500">
-            Certificati X.509 emessi localmente e quelli presenti su NPM.
+            Firma certificati X.509 con la CA root, indipendentemente dai Proxy Host.
           </p>
         </div>
         <button
@@ -309,6 +327,30 @@ export default function Certificates() {
                 <option value={4096}>4096 bit</option>
               </select>
             </Field>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <label className="flex items-start gap-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={form.uploadToNpm}
+                onChange={(e) => setForm({ ...form, uploadToNpm: e.target.checked })}
+              />
+              <span>
+                <span className="font-medium">Carica anche su NPM</span>
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  Salva il certificato come certificato custom in NPM. Non crea né modifica alcun Proxy Host.
+                </span>
+              </span>
+            </label>
+            {form.uploadToNpm && (
+              <input
+                className="input mt-3"
+                placeholder="Nome in NPM (opzionale)"
+                value={form.npmName}
+                onChange={(e) => setForm({ ...form, npmName: e.target.value })}
+              />
+            )}
           </div>
         </div>
       </Modal>

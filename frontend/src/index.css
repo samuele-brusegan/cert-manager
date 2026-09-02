@@ -35,3 +35,41 @@
 body {
   @apply bg-slate-50 text-slate-800;
 }
+
+/* Tema scuro globale, mantenendo le stesse classi Tailwind delle pagine. */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  @apply bg-slate-900 text-slate-100;
+}
+
+.dark .bg-white { background-color: #1e293b; }
+.dark .bg-slate-50 { background-color: #0f172a; }
+.dark .bg-slate-100 { background-color: #334155; }
+.dark .bg-slate-200 { background-color: #475569; }
+.dark .bg-amber-50 { background-color: #422006; }
+.dark .bg-emerald-100 { background-color: #064e3b; }
+.dark .bg-red-100 { background-color: #450a0a; }
+
+.dark .text-slate-800 { color: #f1f5f9; }
+.dark .text-slate-700 { color: #e2e8f0; }
+.dark .text-slate-600 { color: #cbd5e1; }
+.dark .text-slate-500 { color: #94a3b8; }
+.dark .text-slate-400 { color: #94a3b8; }
+.dark .text-amber-700 { color: #fbbf24; }
+.dark .text-emerald-700 { color: #6ee7b7; }
+.dark .text-red-700 { color: #fca5a5; }
+
+.dark .border-slate-100 { border-color: #334155; }
+.dark .border-slate-200 { border-color: #475569; }
+.dark .border-slate-300 { border-color: #64748b; }
+.dark .border-amber-200 { border-color: #92400e; }
+.dark .border-red-200 { border-color: #991b1b; }
+
+.dark .hover\:bg-slate-100:hover { background-color: #334155; }
+.dark .hover\:bg-slate-200:hover { background-color: #475569; }
+.dark .input { background-color: #1e293b; color: #f1f5f9; }
+.dark .input::placeholder { color: #64748b; }
+.dark .focus\:ring-brand-100:focus { --tw-ring-color: #1e3a8a; }

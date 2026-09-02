@@ -9,10 +9,12 @@ import Hosts from "./pages/Hosts.jsx";
 import Login from "./pages/Login.jsx";
 import Icon from "./components/Icon.jsx";
 import { useAuth } from "./components/AuthContext.jsx";
+import { useEffect, useState } from "react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: "dashboard", end: true },
   { to: "/ca", label: "CA Root", icon: "shield" },
+  { to: "/certificates", label: "Certificati SSL", icon: "lock" },
   { to: "/proxy-hosts", label: "Proxy Hosts", icon: "globe" },
   { to: "/hosts", label: "File Hosts", icon: "list" },
   { to: "/scripts", label: "Script di Trust", icon: "download" },
@@ -21,6 +23,15 @@ const nav = [
 
 export default function App() {
   const auth = useAuth();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = window.localStorage.getItem("cert-manager-theme");
+    return saved ? saved === "dark" : window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    window.localStorage.setItem("cert-manager-theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   if (auth.phase === "loading") {
     return (
@@ -64,26 +75,20 @@ export default function App() {
             </NavLink>
           ))}
         </nav>
-        {/* Link "mezzo nascosto" ai certificati */}
-        <div className="border-t border-slate-100 px-3 py-3">
-          <NavLink
-            to="/certificates"
-            className={({ isActive }) =>
-              `flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition-colors ${
-                isActive ? "text-brand-700" : "text-slate-400 hover:text-slate-600"
-              }`
-            }
-          >
-            <Icon name="chevronRight" className="h-3.5 w-3.5" /> Certificati SSL
-          </NavLink>
-        </div>
-
         {/* Utente loggato + logout */}
         <div className="border-t border-slate-200 px-3 py-3">
           <div className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5">
             <span className="truncate text-xs text-slate-500" title={auth.user?.email}>
               {auth.user?.email}
             </span>
+            <button
+              onClick={() => setDarkMode((value) => !value)}
+              className="btn-ghost flex-shrink-0 p-1.5 text-slate-500"
+              title={darkMode ? "Attiva tema chiaro" : "Attiva tema scuro"}
+              aria-label={darkMode ? "Attiva tema chiaro" : "Attiva tema scuro"}
+            >
+              <Icon name={darkMode ? "sun" : "moon"} className="h-4 w-4" />
+            </button>
             <button
               onClick={auth.logout}
               className="btn-ghost flex-shrink-0 p-1.5 text-slate-500 hover:text-red-600"
