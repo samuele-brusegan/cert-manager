@@ -70,6 +70,11 @@ const emptyForm = {
   hostsIp: "127.0.0.1",
 };
 
+function proxyHostUrl(host, domain) {
+  const scheme = Number(host.ssl_forced) > 0 || Number(host.certificate_id) > 0 ? "https" : "http";
+  return `${scheme}://${domain}`;
+}
+
 export default function ProxyHosts() {
   const toast = useToast();
   const [hosts, setHosts] = useState([]);
@@ -309,7 +314,19 @@ export default function ProxyHosts() {
               {hosts.map((h) => (
                 <tr key={h.id} className="border-t border-slate-100">
                   <td className="px-4 py-3 font-medium">
-                    {(h.domain_names || []).join(", ")}
+                    <div className="flex flex-wrap gap-x-2 gap-y-1">
+                      {(h.domain_names || []).map((domain) => (
+                        <a
+                          key={domain}
+                          href={proxyHostUrl(h, domain)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex rounded-md px-1.5 py-0.5 text-brand-700 transition-colors hover:bg-brand-50 hover:text-brand-900 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-1 dark:text-brand-400 dark:hover:bg-slate-700 dark:hover:text-brand-300"
+                        >
+                          {domain}
+                        </a>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-slate-500">
                     {h.forward_scheme}://{h.forward_host}:{h.forward_port}

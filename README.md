@@ -30,9 +30,23 @@ docker compose up -d --build
 
 UI disponibile su **http://localhost:8091**.
 
+Backend e frontend condividono esplicitamente la rete Compose `default`. Per
+collegare il frontend anche alla rete esterna del reverse proxy (di default
+`reverse-proxy`), usa l'override dedicato:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.proxy.yml up -d --build
+```
+
+La rete esterna deve esistere già. Per usare un nome diverso, impostalo con
+`PROXY_NETWORK`, ad esempio `PROXY_NETWORK=nginxproxymanager_default`. La stessa
+variabile indica al backend quale rete interrogare per suggerire i container
+nel campo **Host di forward**.
+
 Il campo **Host di forward** dei Proxy Host propone i container collegati alla
-rete Docker `reverse-proxy`, separando quelli non ancora utilizzati da quelli
-già associati. Il backend legge questa informazione dal Docker Engine tramite
+rete Docker configurata in `PROXY_NETWORK` (default `reverse-proxy`), separando
+quelli non ancora utilizzati da quelli già associati. Il backend legge questa
+informazione dal Docker Engine tramite
 `/var/run/docker.sock`; se la rete o il socket non sono disponibili, è sempre
 possibile scegliere **Inserisci manualmente** e usare un IP o hostname.
 

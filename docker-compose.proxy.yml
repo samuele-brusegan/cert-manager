@@ -1,0 +1,15 @@
+# Override opzionale per esporre il frontend direttamente alla rete del reverse proxy.
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.proxy.yml up -d --build
+#
+# La rete deve esistere già (ad esempio quella di Nginx Proxy Manager).
+services:
+  frontend:
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-reverse-proxy}
