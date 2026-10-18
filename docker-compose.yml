@@ -7,14 +7,16 @@ services:
     environment:
       - PORT=3001
       - DATA_DIR=/data
-      # Permette di leggere i container della rete del reverse proxy dal Docker Engine.
+      # Permette di leggere i container della rete del reverse proxy dal Docker Engine,
+      # tramite il proxy filtrante dockerproxy (solo GET /networks/*).
       - DOCKER_NETWORK=${PROXY_NETWORK:-reverse-proxy}
+      - DOCKER_HOST=tcp://dockerproxy:2375
 
       # URL pubblico opzionale, usato negli script di trust per il download del cert root.
       # - PUBLIC_URL=https://certs.example.com
 
-      # Sicurezza sessione: attiva il flag Secure del cookie quando sei dietro HTTPS.
-      # - COOKIE_SECURE=true
+      # Flag Secure del cookie (servito dietro HTTPS via NPM).
+      - COOKIE_SECURE=true
 
       # Durata sessione idle in ore (default 8).
       # - SESSION_TTL_HOURS=8
@@ -29,7 +31,6 @@ services:
       - HOSTS_FILE=/host-etc-hosts
     volumes:
       - cert_data:/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       # Monta il file hosts dell'host per poterlo modificare dalla UI (lettura/scrittura).
       - /etc/hosts:/host-etc-hosts
     expose:
@@ -38,6 +39,26 @@ services:
     # usando l'URL: http://host.docker.internal:81
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+
+  # Proxy filtrante verso il Docker socket: espone al backend solo la lettura
+  # delle reti (GET /networks/*), niente creazione container o altre API.
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:v0.4.1
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=0
+      - NETWORKS=1
+      - INFO=0
+      - IMAGES=0
+      - POST=0
+      - ALLOW_RESTARTS=0
+      - ALLOW_STOP=0
+      - ALLOW_START=0
+      - LOG_LEVEL=warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - default
 

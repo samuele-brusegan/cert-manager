@@ -2,11 +2,26 @@ import http from "node:http";
 
 const DOCKER_SOCKET = process.env.DOCKER_SOCKET || "/var/run/docker.sock";
 const DOCKER_NETWORK = process.env.DOCKER_NETWORK || "reverse-proxy";
+// DOCKER_HOST=tcp://host:port (es. docker-socket-proxy) oppure socket unix.
+const DOCKER_HOST = process.env.DOCKER_HOST || "";
+
+function requestOptions(pathname) {
+  if (DOCKER_HOST.startsWith("tcp://")) {
+    const u = new URL(DOCKER_HOST.replace(/^tcp:\/\//, "http://"));
+    return {
+      hostname: u.hostname,
+      port: u.port || 2375,
+      path: pathname,
+      method: "GET",
+    };
+  }
+  return { socketPath: DOCKER_SOCKET, path: pathname, method: "GET" };
+}
 
 function dockerGet(pathname) {
   return new Promise((resolve, reject) => {
     const req = http.request(
-      { socketPath: DOCKER_SOCKET, path: pathname, method: "GET" },
+      requestOptions(pathname),
       (res) => {
         let body = "";
         res.setEncoding("utf8");
