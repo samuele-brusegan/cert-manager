@@ -18,6 +18,11 @@ services:
 
       # Durata sessione idle in ore (default 8).
       # - SESSION_TTL_HOURS=8
+      # Origini cross-origin extra ammesse per l'API (virgola-separate). Di default solo same-origin.
+      # - CORS_ORIGIN=https://app.example.com
+      # Rate limit login/setup: max tentativi e finestra in minuti (default 10 / 10).
+      # - AUTH_RATE_LIMIT_MAX=10
+      # - AUTH_RATE_LIMIT_WINDOW_MIN=10
 
       # Percorso del file hosts gestito dal backend. Per scrivere sul file hosts
       # REALE dell'host, monta il file (vedi volumes) e punta qui:

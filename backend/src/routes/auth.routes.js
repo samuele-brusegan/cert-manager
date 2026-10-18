@@ -2,9 +2,22 @@ import { Router } from "express";
 import { readConfig, updateNpmConfig } from "../lib/store.js";
 import { verifyCredentials, pingNpm } from "../lib/npm.js";
 import { createSession, destroySession, getSession } from "../lib/auth.js";
-import { SESSION_COOKIE, COOKIE_SECURE, SESSION_TTL_MS } from "../config.js";
+import {
+  SESSION_COOKIE,
+  COOKIE_SECURE,
+  SESSION_TTL_MS,
+  AUTH_RATE_LIMIT_MAX,
+  AUTH_RATE_LIMIT_WINDOW_MS,
+} from "../config.js";
+import { createRateLimiter } from "../lib/rateLimit.js";
 
 const router = Router();
+
+// Anti brute-force su login e setup.
+const authLimiter = createRateLimiter({
+  windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
+  max: AUTH_RATE_LIMIT_MAX,
+})();
 
 function cookieOptions() {
   return {
@@ -38,7 +51,7 @@ router.get("/status", async (req, res, next) => {
 
 // Setup iniziale: imposta l'URL di NPM. Pubblico solo finché non è configurato;
 // dopo, modificabile solo da utenti autenticati.
-router.post("/setup", async (req, res, next) => {
+router.post("/setup", authLimiter, async (req, res, next) => {
   try {
     const config = await readConfig();
     const configured = Boolean(config.npm && config.npm.url);
@@ -65,7 +78,7 @@ router.post("/setup", async (req, res, next) => {
 
 // Login con le credenziali NPM. Verifica live contro NPM, salva le credenziali
 // (service account) e crea la sessione.
-router.post("/login", async (req, res, next) => {
+router.post("/login", authLimiter, async (req, res, next) => {
   try {
     const config = await readConfig();
     const url = config.npm?.url;
@@ -79,6 +92,7 @@ router.post("/login", async (req, res, next) => {
       return res.status(400).json({ error: "Email e password obbligatorie" });
     }
     await verifyCredentials({ url, email, password }); // 401 se non valide
+    authLimiter.reset(req.rateLimitKey); // login riuscito: azzera il contatore
     await updateNpmConfig({ email, password });
     const id = createSession(email);
     res.cookie(SESSION_COOKIE, id, cookieOptions());

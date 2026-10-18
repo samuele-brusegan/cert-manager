@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { PORT, SESSION_COOKIE } from "./config.js";
+import { PORT, SESSION_COOKIE, CORS_ORIGINS } from "./config.js";
 import { ensureDirs } from "./lib/store.js";
 import { getSession } from "./lib/auth.js";
 
@@ -14,7 +14,29 @@ import scriptsRoutes from "./routes/scripts.routes.js";
 import hostsRoutes from "./routes/hosts.routes.js";
 
 const app = express();
-app.use(cors({ credentials: true }));
+
+// CORS: di default nessuna origine cross-origin è ammessa (il frontend è
+// same-origin via nginx). Origini extra configurabili con CORS_ORIGIN.
+app.use(
+  cors({
+    credentials: true,
+    origin(origin, cb) {
+      // Senza header Origin (stesso host, curl, proxy) oppure in whitelist.
+      if (!origin || CORS_ORIGINS.includes(origin)) return cb(null, true);
+      cb(null, false);
+    },
+  })
+);
+
+// Security headers di base.
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
+
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 

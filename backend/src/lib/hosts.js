@@ -6,6 +6,23 @@ import { HOSTS_FILE, HOSTS_PLATFORM } from "../config.js";
 // marcate con un commento finale, così non tocchiamo mai le altre voci.
 const MARKER = "# cert-manager";
 
+// Validazione input: impedisce iniezione di righe arbitrarie nel file hosts.
+const DOMAIN_RE =
+  /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i;
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+const IPV6_RE = /^(?=.*:)[0-9a-f:.]+(%[a-z0-9._-]+)?$/i;
+
+export function isValidDomain(d) {
+  return typeof d === "string" && DOMAIN_RE.test(d);
+}
+
+export function isValidIp(ip) {
+  if (typeof ip !== "string") return false;
+  const m = IPV4_RE.exec(ip);
+  if (m) return m.slice(1).every((o) => Number(o) <= 255);
+  return IPV6_RE.test(ip);
+}
+
 function mapFsError(err) {
   const messages = {
     EACCES:
@@ -95,9 +112,21 @@ async function writeRaw(content) {
 // Aggiunge/aggiorna le voci gestite per i domini indicati verso un IP.
 export async function addEntries(ip, domains) {
   const targetIp = (ip || "127.0.0.1").trim();
+  if (!isValidIp(targetIp)) {
+    throw Object.assign(new Error(`IP non valido: ${targetIp}`), {
+      status: 400,
+    });
+  }
   const cleanDomains = (domains || []).map((d) => d.trim()).filter(Boolean);
   if (cleanDomains.length === 0) {
     throw Object.assign(new Error("Nessun dominio da aggiungere"), { status: 400 });
+  }
+  const invalid = cleanDomains.filter((d) => !isValidDomain(d));
+  if (invalid.length) {
+    throw Object.assign(
+      new Error(`Domini non validi: ${invalid.join(", ")}`),
+      { status: 400 }
+    );
   }
 
   let content = "";
@@ -134,6 +163,13 @@ export async function removeEntries(domains) {
   const cleanDomains = (domains || []).map((d) => d.trim().toLowerCase()).filter(Boolean);
   if (cleanDomains.length === 0) {
     throw Object.assign(new Error("Nessun dominio da rimuovere"), { status: 400 });
+  }
+  const invalid = cleanDomains.filter((d) => !isValidDomain(d));
+  if (invalid.length) {
+    throw Object.assign(
+      new Error(`Domini non validi: ${invalid.join(", ")}`),
+      { status: 400 }
+    );
   }
   let content;
   try {
