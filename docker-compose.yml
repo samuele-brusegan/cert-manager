@@ -2,7 +2,6 @@ services:
   backend:
     build:
       context: ./backend
-      network: host
     restart: unless-stopped
     environment:
       - PORT=3001
@@ -65,7 +64,6 @@ services:
   frontend:
     build:
       context: ./frontend
-      network: host
     restart: unless-stopped
     depends_on:
       - backend
