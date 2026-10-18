@@ -12,7 +12,8 @@ services:
       - DOCKER_HOST=tcp://dockerproxy:2375
 
       # URL pubblico opzionale, usato negli script di trust per il download del cert root.
-      # - PUBLIC_URL=https://certs.example.com
+      # Impostalo in un file .env accanto al compose: PUBLIC_URL=https://cert-manager.example.com
+      - PUBLIC_URL=${PUBLIC_URL:-}
 
       # Flag Secure del cookie (servito dietro HTTPS via NPM).
       - COOKIE_SECURE=true
