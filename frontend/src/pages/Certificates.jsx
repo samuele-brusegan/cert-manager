@@ -210,17 +210,38 @@ export default function Certificates() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
-                        <a className="btn-ghost px-2 py-1 text-xs" href={api.certDownloadUrl(c.id, "fullchain")} download>
-                          chain
+                        <a
+                          className="btn-ghost p-1.5"
+                          href={api.certDownloadUrl(c.id, "fullchain")}
+                          download
+                          title="Scarica certificato + chain (fullchain.pem)"
+                          aria-label="Scarica fullchain"
+                        >
+                          <Icon name="download" className="h-4 w-4" />
                         </a>
-                        <a className="btn-ghost px-2 py-1 text-xs" href={api.certDownloadUrl(c.id, "key")} download>
-                          key
+                        <a
+                          className="btn-ghost p-1.5"
+                          href={api.certDownloadUrl(c.id, "key")}
+                          download
+                          title="Scarica chiave privata (privkey.pem)"
+                          aria-label="Scarica chiave privata"
+                        >
+                          <Icon name="key" className="h-4 w-4" />
                         </a>
-                        <button className="btn-secondary px-2 py-1 text-xs" onClick={() => push(c.id)}>
+                        <button
+                          className="btn-secondary px-2 py-1 text-xs"
+                          onClick={() => push(c.id)}
+                          title="Carica su Nginx Proxy Manager"
+                        >
                           <Icon name="upload" className="h-3.5 w-3.5" /> NPM
                         </button>
-                        <button className="btn-ghost px-2 py-1 text-xs text-red-600" onClick={() => remove(c.id)}>
-                          elimina
+                        <button
+                          className="btn-ghost p-1.5 text-red-600"
+                          onClick={() => remove(c.id)}
+                          title="Elimina certificato"
+                          aria-label="Elimina certificato"
+                        >
+                          <Icon name="trash" className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

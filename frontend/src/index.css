@@ -61,6 +61,16 @@ body {
 .dark .text-amber-700 { color: #fbbf24; }
 .dark .text-emerald-700 { color: #6ee7b7; }
 .dark .text-red-700 { color: #fca5a5; }
+.dark .text-emerald-600 { color: #34d399; }
+.dark .text-amber-600 { color: #fbbf24; }
+.dark .text-red-600 { color: #f87171; }
+.dark .text-brand-600 { color: #6aa6f0; }
+.dark .text-brand-700 { color: #93c5fd; }
+.dark .hover\:text-brand-900:hover { color: #bfdbfe; }
+.dark .bg-brand-50 { background-color: #172e5c; }
+.dark .hover\:bg-brand-50:hover { background-color: #1e3a8a; }
+.dark .border-brand-500 { border-color: #2f7ce5; }
+.dark .border-brand-600 { border-color: #2f7ce5; }
 
 .dark .border-slate-100 { border-color: #334155; }
 .dark .border-slate-200 { border-color: #475569; }
