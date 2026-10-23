@@ -10,26 +10,29 @@ export function createRateLimiter({ windowMs, max }) {
     for (const [k, b] of buckets) if (b.resetAt <= now) buckets.delete(k);
   }, Math.min(windowMs, 60 * 1000)).unref?.();
 
-  const middleware = (keyFn = (req) => req.ip) => (req, res, next) => {
-    const key = keyFn(req);
-    const now = Date.now();
-    let b = buckets.get(key);
-    if (!b || b.resetAt <= now) {
-      b = { count: 0, resetAt: now + windowMs };
-      buckets.set(key, b);
-    }
-    b.count += 1;
-    if (b.count > max) {
-      const retryAfter = Math.ceil((b.resetAt - now) / 1000);
-      res.setHeader("Retry-After", String(retryAfter));
-      return res
-        .status(429)
-        .json({ error: "Troppi tentativi. Riprova più tardi." });
-    }
-    req.rateLimitKey = key;
-    next();
+  const middleware = (keyFn = (req) => req.ip) => {
+    const handler = (req, res, next) => {
+      const key = keyFn(req);
+      const now = Date.now();
+      let b = buckets.get(key);
+      if (!b || b.resetAt <= now) {
+        b = { count: 0, resetAt: now + windowMs };
+        buckets.set(key, b);
+      }
+      b.count += 1;
+      if (b.count > max) {
+        const retryAfter = Math.ceil((b.resetAt - now) / 1000);
+        res.setHeader("Retry-After", String(retryAfter));
+        return res
+          .status(429)
+          .json({ error: "Troppi tentativi. Riprova più tardi." });
+      }
+      req.rateLimitKey = key;
+      next();
+    };
+    handler.reset = (key) => buckets.delete(key);
+    return handler;
   };
 
-  middleware.reset = (key) => buckets.delete(key);
   return middleware;
 }
